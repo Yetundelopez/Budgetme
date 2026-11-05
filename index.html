@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>Spent – Expense Tracker</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══ App Header ══════════════════════════════════════ -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-icon">⚡</div>
+      <span class="brand-name">Spent</span>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-btn" id="budgetBtn" title="Set monthly budget">🎯</button>
+      <button class="hdr-btn" id="searchBtn" title="Search expenses">🔍</button>
+    </div>
+  </header>
+
+  <!-- ══ Search Bar (slide-down) ═════════════════════════ -->
+  <div class="search-bar-wrap" id="searchWrap">
+    <div class="search-bar-inner">
+      <span class="search-ico">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search by name, category, amount…" autocomplete="off"/>
+      <button class="search-clear" id="searchClear">✕</button>
+    </div>
+  </div>
+
+  <!-- ══ Month Navigator ═════════════════════════════════ -->
+  <div class="month-nav">
+    <button class="mnav-btn" id="prevMonth" aria-label="Previous month">‹</button>
+    <div class="mnav-center">
+      <span class="mnav-label" id="monthLabel">November 2026</span>
+      <span class="mnav-now" id="nowBadge">● Now</span>
+    </div>
+    <button class="mnav-btn" id="nextMonth" aria-label="Next month">›</button>
+  </div>
+
+  <!-- ══ Hero Stats Card ═════════════════════════════════ -->
+  <div class="hero-card">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-top-row">
+      <span class="hero-eyebrow">Total Spent</span>
+      <span class="hero-trend-pill" id="heroTrend"></span>
+    </div>
+    <div class="hero-amount-row">
+      <span class="hero-currency">$</span>
+      <span class="hero-number" id="heroTotal">0.00</span>
+    </div>
+    <div class="hero-stats-strip">
+      <div class="hstat">
+        <span class="hstat-val" id="hCount">0</span>
+        <span class="hstat-lbl">items</span>
+      </div>
+      <div class="hstat-divider"></div>
+      <div class="hstat">
+        <span class="hstat-val" id="hAvg">$0</span>
+        <span class="hstat-lbl">average</span>
+      </div>
+      <div class="hstat-divider"></div>
+      <div class="hstat">
+        <span class="hstat-val" id="hHighest">$0</span>
+        <span class="hstat-lbl">largest</span>
+      </div>
+      <div class="hstat-divider"></div>
+      <div class="hstat">
+        <span class="hstat-val" id="hTop">—</span>
+        <span class="hstat-lbl">top cat.</span>
+      </div>
+    </div>
+    <!-- Budget Progress Bar -->
+    <div class="budget-wrap" id="budgetWrap">
+      <div class="budget-meta">
+        <span id="budgetLbl">Budget</span>
+        <span id="budgetPctLbl"></span>
+      </div>
+      <div class="budget-track">
+        <div class="budget-fill" id="budgetFill"></div>
+      </div>
+      <span class="budget-remaining" id="budgetRemaining"></span>
+    </div>
+  </div>
+
+  <!-- ══ Breakdown Card ══════════════════════════════════ -->
+  <div class="breakdown-card" id="breakdownCard">
+    <div class="section-eyebrow">Spending Breakdown</div>
+    <div class="breakdown-body">
+      <div class="donut-wrap">
+        <canvas id="donutChart" width="200" height="200"></canvas>
+        <div class="donut-center-label" id="donutCenterLabel"></div>
+      </div>
+      <div class="cat-rows" id="catRows"></div>
+    </div>
+  </div>
+
+  <!-- ══ Filter Chips ════════════════════════════════════ -->
+  <div class="chips-scroll-wrap">
+    <div class="chips-row" id="chipsRow">
+      <button class="chip active" data-cat="all">All</button>
+    </div>
+  </div>
+
+  <!-- ══ List Toolbar ════════════════════════════════════ -->
+  <div class="list-toolbar">
+    <span class="list-count-lbl" id="listCountLbl">0 expenses</span>
+    <div class="sort-btns">
+      <button class="sort-btn active" id="sortDate" data-sort="date">📅 Date</button>
+      <button class="sort-btn" id="sortAmt" data-sort="amount">💲 Amount</button>
+    </div>
+  </div>
+
+  <!-- ══ Expense Groups ══════════════════════════════════ -->
+  <div id="listArea">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-emoji">🧘</div>
+      <div class="empty-title">Nothing here yet</div>
+      <div class="empty-sub">Tap the <strong>+</strong> button to log your first expense this month.</div>
+    </div>
+    <div class="empty-state" id="noResults" style="display:none">
+      <div class="empty-emoji">🔎</div>
+      <div class="empty-title">No matches</div>
+      <div class="empty-sub">Try a different keyword or clear the search.</div>
+    </div>
+    <div id="groupedList"></div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- ══ FAB ════════════════════════════════════════════ -->
+<button class="fab" id="fab" aria-label="Add Expense">+</button>
+
+<!-- ══ Backdrop ════════════════════════════════════════ -->
+<div class="backdrop" id="backdrop"></div>
+
+<!-- ══ Bottom Sheet: Add / Edit ═══════════════════════ -->
+<div class="bottom-sheet" id="bottomSheet" aria-hidden="true">
+  <div class="sheet-pill-wrap"><div class="sheet-pill"></div></div>
+  <div class="sheet-header">
+    <h2 class="sheet-title" id="sheetTitle">New Expense</h2>
+    <button class="sheet-x" id="sheetClose" aria-label="Close">✕</button>
+  </div>
+  <div class="sheet-body">
+    <form id="expenseForm" novalidate autocomplete="off">
+
+      <!-- Category grid -->
+      <div class="form-block">
+        <label class="form-label">Category</label>
+        <div class="cat-grid" id="catGrid"></div>
+      </div>
+
+      <!-- Date + Amount -->
+      <div class="form-row-2">
+        <div class="form-block">
+          <label class="form-label" for="dateInput">Date</label>
+          <input class="form-input" type="date" id="dateInput" required/>
+          <span class="form-err" id="dateErr"></span>
+        </div>
+        <div class="form-block">
+          <label class="form-label" for="amtInput">Amount ($)</label>
+          <input class="form-input" type="number" id="amtInput"
+                 placeholder="0.00" min="0.01" step="0.01" required/>
+          <span class="form-err" id="amtErr"></span>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-block">
+        <label class="form-label" for="descInput">Description</label>
+        <input class="form-input" type="text" id="descInput"
+               placeholder="e.g. Grocery run, Uber, Netflix…" required/>
+        <span class="form-err" id="descErr"></span>
+      </div>
+
+      <button class="submit-btn" type="submit" id="submitBtn">Add Expense</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══ Budget Modal ═══════════════════════════════════ -->
+<div class="modal-overlay" id="budgetModal" style="display:none" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-emo">🎯</div>
+    <h3 class="modal-h">Monthly Budget</h3>
+    <p class="modal-p">Set a spending limit and track how close you are.</p>
+    <input class="modal-input" type="number" id="budgetInput"
+           placeholder="e.g. 2000" min="1" step="1"/>
+    <div class="modal-btns">
+      <button class="modal-btn-ghost" id="budgetCancel">Cancel</button>
+      <button class="modal-btn-primary" id="budgetSave">Save</button>
+    </div>
+    <button class="modal-remove-link" id="budgetRemove">Remove budget</button>
+  </div>
+</div>
+
+<!-- ══ Delete Modal ═══════════════════════════════════ -->
+<div class="modal-overlay" id="deleteModal" style="display:none" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-emo">⚠️</div>
+    <h3 class="modal-h">Delete expense?</h3>
+    <p class="modal-p" id="deleteDesc">This action can't be undone.</p>
+    <div class="modal-btns">
+      <button class="modal-btn-ghost" id="deleteCancel">Keep it</button>
+      <button class="modal-btn-danger" id="deleteConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Toast ══════════════════════════════════════════ -->
+<div class="toast" id="toast" aria-live="polite"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
